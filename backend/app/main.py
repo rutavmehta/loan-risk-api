@@ -111,6 +111,17 @@ def predict_loan(
 
     for item in data:
         input_dict = item.dict()
+        
+        # Convert all numeric fields to float explicitly
+        numeric_fields = [
+            "no_of_dependents", "income_annum", "loan_amount", "loan_term",
+            "cibil_score", "residential_assets_value", "commercial_assets_value",
+            "luxury_assets_value", "bank_asset_value"
+        ]
+        for field in numeric_fields:
+            if field in input_dict:
+                input_dict[field] = float(input_dict[field])
+        
         df = pd.DataFrame([input_dict])
 
         # Label encoding
@@ -125,7 +136,9 @@ def predict_loan(
                         f"Invalid value for {col}. Allowed values: {classes}"
                     )
 
-                df.at[0, col] = classes.index(value)
+                # Encode the categorical value
+                encoded_value = classes.index(value)
+                df[col] = encoded_value
 
         # Maintain feature order
         df = df[feature_columns]

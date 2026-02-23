@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Test</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="auth-admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <h1>LoanRisk AI - Debug Test</h1>
+    
+    <!-- Simple auth modal -->
+    <div id="authModal" class="auth-modal" style="display: flex;">
+        <div class="auth-container">
+            <div class="auth-logo">
+                <i class="fas fa-chart-line"></i>
+                <h1>LoanRisk AI</h1>
+                <p>Debug Test</p>
+            </div>
+            
+            <div class="auth-tabs">
+                <button class="auth-tab-btn active" onclick="switchTab('login')">Login</button>
+                <button class="auth-tab-btn" onclick="switchTab('register')">Register</button>
+            </div>
+            
+            <div id="login" class="auth-tab-content active">
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label>Username:</label>
+                        <input type="text" id="loginUsername" placeholder="admin" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Password:</label>
+                        <input type="password" id="loginPassword" placeholder="admin123" required>
+                    </div>
+                    <button type="submit" class="auth-submit-btn">Login</button>
+                </form>
+            </div>
+            
+            <div id="register" class="auth-tab-content" style="display:none;">
+                <form id="registerForm">
+                    <div class="form-group">
+                        <label>Full Name:</label>
+                        <input type="text" id="registerFullname" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email:</label>
+                        <input type="email" id="registerEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Username:</label>
+                        <input type="text" id="registerUsername" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Password:</label>
+                        <input type="password" id="registerPassword" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Confirm Password:</label>
+                        <input type="password" id="registerConfirm" required>
+                    </div>
+                    <button type="submit" class="auth-submit-btn">Register</button>
+                </form>
+            </div>
+        </div>
+        
+        <div class="auth-bg">
+            <div class="blob blob1"></div>
+            <div class="blob blob2"></div>
+            <div class="blob blob3"></div>
+        </div>
+    </div>
+    
+    <div class="main-wrapper" style="display: none;">
+        <h2>✅ APP LOADED - You are logged in!</h2>
+        <button onclick="logout()">Logout</button>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="utils.js"></script>
+    <script src="auth.js"></script>
+    
+    <script>
+        function switchTab(tab) {
+            console.log('Switching to:', tab);
+            const login = document.getElementById('login');
+            const register = document.getElementById('register');
+            const buttons = document.querySelectorAll('.auth-tab-btn');
+            
+            buttons.forEach(btn => btn.classList.remove('active'));
+            
+            if (tab === 'login') {
+                login.style.display = 'block';
+                register.style.display = 'none';
+                buttons[0].classList.add('active');
+            } else {
+                login.style.display = 'none';
+                register.style.display = 'block';
+                buttons[1].classList.add('active');
+            }
+        }
+        
+        function logout() {
+            authSystem.logout();
+            document.getElementById('authModal').style.display = 'flex';
+            document.querySelector('.main-wrapper').style.display = 'none';
+        }
+        
+        function showNotification(msg, type) {
+            alert(msg);
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🚀 Page loaded');
+            authSystem.init();
+            
+            // Setup login form
+            const loginForm = document.getElementById('loginForm');
+            if (loginForm) {
+                loginForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    console.log('Login form submitted');
+                    
+                    const username = document.getElementById('loginUsername').value;
+                    const password = document.getElementById('loginPassword').value;
+                    
+                    console.log('Attempting login:', username);
+                    const result = authSystem.login(username, password);
+                    console.log('Login result:', result);
+                    
+                    if (result.success) {
+                        console.log('Login successful!');
+                        alert('✅ ' + result.message);
+                        
+                        // Switch to app
+                        document.getElementById('authModal').style.display = 'none';
+                        document.querySelector('.main-wrapper').style.display = 'block';
+                    } else {
+                        console.log('Login failed:', result.message);
+                        alert('❌ ' + result.message);
+                    }
+                });
+            }
+            
+            // Setup register form
+            const registerForm = document.getElementById('registerForm');
+            if (registerForm) {
+                registerForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    console.log('Register form submitted');
+                    
+                    const fullname = document.getElementById('registerFullname').value;
+                    const email = document.getElementById('registerEmail').value;
+                    const username = document.getElementById('registerUsername').value;
+                    const password = document.getElementById('registerPassword').value;
+                    const confirmPassword = document.getElementById('registerConfirm').value;
+                    
+                    console.log('Attempting registration:', username);
+                    const result = authSystem.register(username, email, password, confirmPassword, fullname);
+                    console.log('Register result:', result);
+                    
+                    if (result.success) {
+                        console.log('Registration successful!');
+                        alert('✅ ' + result.message);
+                        registerForm.reset();
+                        switchTab('login');
+                    } else {
+                        console.log('Registration failed:', result.message);
+                        alert('❌ ' + result.message);
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

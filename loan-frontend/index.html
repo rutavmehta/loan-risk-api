@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LoanRisk AI - Intelligent Loan Risk Assessment</title>
+    <link rel="stylesheet" href="main-styles.css">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="auth-admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+</head>
+<body>
+    <!-- ============================================================ -->
+    <!-- AUTHENTICATION MODAL -->
+    <!-- ============================================================ -->
+    <div id="authModal" class="auth-modal">
+        <div class="auth-container">
+            <!-- Logo Section -->
+            <div class="auth-logo">
+                <i class="fas fa-chart-line"></i>
+                <h1>LoanRisk AI</h1>
+                <p>Intelligent Loan Risk Assessment</p>
+            </div>
+
+            <!-- Auth Tabs -->
+            <div class="auth-tabs">
+                <button class="auth-tab-btn active" onclick="switchAuthTab('loginTab')" id="authTabs">Login</button>
+                <button class="auth-tab-btn" onclick="switchAuthTab('registerTab')">Register</button>
+            </div>
+
+            <!-- Login Tab -->
+            <div id="loginTab" class="auth-tab-content active">
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="loginUsername">
+                            <i class="fas fa-user"></i> Username
+                        </label>
+                        <input type="text" id="loginUsername" placeholder="Enter your username" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="loginPassword">
+                            <i class="fas fa-lock"></i> Password
+                        </label>
+                        <input type="password" id="loginPassword" placeholder="Enter your password" required>
+                    </div>
+
+                    <button type="submit" class="auth-submit-btn">
+                        <i class="fas fa-sign-in-alt"></i> Login
+                    </button>
+                </form>
+            </div>
+
+            <!-- Register Tab -->
+            <div id="registerTab" class="auth-tab-content">
+                <form id="registerForm">
+                    <div class="form-group">
+                        <label for="registerFullname">
+                            <i class="fas fa-id-badge"></i> Full Name
+                        </label>
+                        <input type="text" id="registerFullname" placeholder="Enter your full name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="registerEmail">
+                            <i class="fas fa-envelope"></i> Email
+                        </label>
+                        <input type="email" id="registerEmail" placeholder="Enter your email" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="registerUsername">
+                            <i class="fas fa-user"></i> Username
+                        </label>
+                        <input type="text" id="registerUsername" placeholder="Choose a username" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="registerPassword">
+                            <i class="fas fa-lock"></i> Password
+                        </label>
+                        <input type="password" id="registerPassword" placeholder="At least 6 characters" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="registerConfirm">
+                            <i class="fas fa-check-circle"></i> Confirm Password
+                        </label>
+                        <input type="password" id="registerConfirm" placeholder="Confirm your password" required>
+                    </div>
+
+                    <button type="submit" class="auth-submit-btn">
+                        <i class="fas fa-user-plus"></i> Register
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Background Animation -->
+        <div class="auth-bg">
+            <div class="blob blob1"></div>
+            <div class="blob blob2"></div>
+            <div class="blob blob3"></div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- MAIN APPLICATION (Shown when logged in) -->
+    <!-- ============================================================ -->
+    <div class="main-wrapper">
+        <!-- Theme Toggle -->
+        <div class="theme-toggle">
+            <button id="themeBtn" class="theme-btn" title="Toggle Dark/Light Mode">
+                <i class="fas fa-moon"></i>
+            </button>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="navbar">
+            <div class="nav-container">
+                <div class="nav-logo">
+                    <i class="fas fa-chart-line"></i>
+                    <span>LoanRisk AI</span>
+                </div>
+                <ul class="nav-menu">
+                    <li><a href="#home" class="nav-link active" data-page="home">Home</a></li>
+                    <li><a href="#predict" class="nav-link" data-page="predict">Predict</a></li>
+                    <li><a href="#analytics" class="nav-link" data-page="analytics">Analytics</a></li>
+                    <li><a href="#about" class="nav-link" data-page="about">About Model</a></li>
+                </ul>
+
+                <!-- User Menu -->
+                <div class="nav-user-menu">
+                    <span class="user-greeting" id="userGreeting">Welcome!</span>
+                    <span id="currentUsername">User</span>
+                    <button class="logout-btn" onclick="handleLogout()" title="Logout">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
+
+                <div class="nav-toggle" id="navToggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- HOME PAGE -->
+            <section id="home-page" class="page active">
+                <!-- Hero Section -->
+                <div class="hero-section">
+                    <div class="hero-content">
+                        <h1 class="hero-title">Intelligent Loan Risk Assessment</h1>
+                        <p class="hero-subtitle">AI-Powered Prediction for Smarter Lending Decisions</p>
+                        <div class="hero-buttons">
+                            <button class="cta-btn primary" onclick="navigateTo('predict')">
+                                <i class="fas fa-rocket"></i> Start Predicting
+                            </button>
+                            <button class="cta-btn secondary" onclick="navigateTo('analytics')">
+                                <i class="fas fa-chart-bar"></i> View Analytics
+                            </button>
+                        </div>
+                    </div>
+                    <div class="hero-image">
+                        <div class="floating-card card1">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Approved</span>
+                        </div>
+                        <div class="floating-card card2">
+                            <i class="fas fa-times-circle"></i>
+                            <span>Rejected</span>
+                        </div>
+                        <div class="floating-card card3">
+                            <i class="fas fa-percentage"></i>
+                            <span>89.5%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stats Section -->
+                <div class="stats-section">
+                    <div class="stat-box">
+                        <i class="fas fa-brain"></i>
+                        <h3>AI Powered</h3>
+                        <p>Advanced machine learning models</p>
+                    </div>
+                    <div class="stat-box">
+                        <i class="fas fa-bolt"></i>
+                        <h3>Ultra Fast</h3>
+                        <p>Real-time predictions in seconds</p>
+                    </div>
+                    <div class="stat-box">
+                        <i class="fas fa-lock"></i>
+                        <h3>Secure</h3>
+                        <p>Enterprise-grade security</p>
+                    </div>
+                    <div class="stat-box">
+                        <i class="fas fa-chart-pie"></i>
+                        <h3>Analytics</h3>
+                        <p>Comprehensive insights and reports</p>
+                    </div>
+                </div>
+
+                <!-- KPI Cards -->
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="kpi-content">
+                            <div class="kpi-label">Total Users</div>
+                            <div class="kpi-value" id="homeUsersCount">12</div>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="kpi-content">
+                            <div class="kpi-label">Total Predictions</div>
+                            <div class="kpi-value" id="homePredictionsCount">127</div>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon">
+                            <i class="fas fa-percent"></i>
+                        </div>
+                        <div class="kpi-content">
+                            <div class="kpi-label">Approval Rate</div>
+                            <div class="kpi-value" id="homeApprovalRate">67%</div>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon">
+                            <i class="fas fa-hourglass-end"></i>
+                        </div>
+                        <div class="kpi-content">
+                            <div class="kpi-label">API Calls</div>
+                            <div class="kpi-value" id="homeApiCalls">342</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        <!-- PREDICT PAGE -->
+        <section id="predict-page" class="page">
+            <div class="predict-container">
+                <!-- Input Form -->
+                <div class="form-panel">
+                    <h2><i class="fas fa-edit"></i> Loan Application Form</h2>
+                    
+                    <form id="predictionForm">
+                        <!-- Personal Information -->
+                        <div class="form-section">
+                            <h3>Personal Information</h3>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="dependents">
+                                        Number of Dependents
+                                        <span class="tooltip-icon" title="Number of family members dependent on applicant">
+                                            <i class="fas fa-info-circle"></i>
+                                        </span>
+                                    </label>
+                                    <select id="dependents" name="no_of_dependents" required>
+                                        <option value="">Select...</option>
+                                        <option value="0">0</option>
+                                        <option value="1">1</option>
+                                        <option value="2">2</option>
+                                        <option value="3">3</option>
+                                        <option value="4">4+</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="education">
+                                        Education
+                                        <span class="tooltip-icon" title="Education level impacts risk assessment">
+                                            <i class="fas fa-info-circle"></i>
+                                        </span>
+                                    </label>
+                                    <select id="education" name="education" required>
+                                        <option value="">Select...</option>
+                                        <option value="Graduate">Graduate</option>
+                                        <option value="Not Graduate">Not Graduate</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="selfEmployed">
+                                        Employment Type
+                                        <span class="tooltip-icon" title="Self-employed status affects loan eligibility">
+                                            <i class="fas fa-info-circle"></i>
+                                        </span>
+                                    </label>
+                                    <select id="selfEmployed" name="self_employed" required>
+                                        <option value="">Select...</option>
+                                        <option value="No">Salaried</option>
+                                        <option value="Yes">Self-Employed</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Financial Information -->
+                        <div class="form-section">
+                            <h3>Financial Information</h3>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="income">
+                                        Annual Income (₹)
+                                        <span class="tooltip-icon" title="Total annual income (before tax)">
+                                            <i class="fas fa-info-circle"></i>
+                                        </span>
+                                    </label>
+                                    <input type="number" id="income" name="income_annum" 
+                                           placeholder="e.g., 500000" step="10000" required>
+                                    <small class="range-hint">Min: ₹100,000 | Max: ₹50,000,000</small>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="loanAmount">
+                                        Loan Amount (₹)
+                                        <span class="tooltip-icon" title="Total loan amount requested">
+                                            <i class="fas fa-info-circle"></i>
+                                        </span>
+                                    </label>
+                                    <input type="number" id="loanAmount" name="loan_amount" 
+                                           placeholder="e.g., 300000" step="10000" required>
+                                    <small class="range-hint">Min: ₹50,000 | Max: ₹30,000,000</small>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="loanTerm">
+                                        Loan Term (Years)
+                                        <span class="tooltip-icon" title="Duration to repay the loan">
+                                            <i class="fas fa-info-circle"></i>
+                                        </span>
+                                    </label>
+                                    <input type="number" id="loanTerm" name="loan_term" 
+                                           placeholder="e.g., 5" step="0.5" min="1" max="30" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Credit & Assets -->
+                        <div class="form-section">
+                            <h3>Credit & Assets</h3>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="cibilScore">
+                                        CIBIL Score
+                                        <span class="tooltip-icon" title="Credit score (300-900). Higher is better">
+                                            <i class="fas fa-info-circle"></i>
+                                        </span>
+                                    </label>
+                                    <input type="number" id="cibilScore" name="cibil_score" 
+                                           placeholder="e.g., 750" min="300" max="900" required>
+                                    <small class="range-hint">Range: 300 - 900</small>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="residentialAssets">
+                                        Residential Assets (₹)
+                                        <span class="tooltip-icon" title="Value of residential property owned">
+                                            <i class="fas fa-info-circle"></i>
+                                        </span>
+                                    </label>
+                                    <input type="number" id="residentialAssets" name="residential_assets_value" 
+                                           placeholder="e.g., 5000000" step="100000" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="commercialAssets">
+                                        Commercial Assets (₹)
+                                        <span class="tooltip-icon" title="Value of commercial property owned">
+                                            <i class="fas fa-info-circle"></i>
+                                        </span>
+                                    </label>
+                                    <input type="number" id="commercialAssets" name="commercial_assets_value" 
+                                           placeholder="e.g., 2000000" step="100000" required>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="luxuryAssets">
+                                        Luxury Assets (₹)
+                                        <span class="tooltip-icon" title="Value of luxury items (vehicles, jewelry)">
+                                            <i class="fas fa-info-circle"></i>
+                                        </span>
+                                    </label>
+                                    <input type="number" id="luxuryAssets" name="luxury_assets_value" 
+                                           placeholder="e.g., 500000" step="100000" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="bankAssets">
+                                        Bank Assets (₹)
+                                        <span class="tooltip-icon" title="Cash and bank balance">
+                                            <i class="fas fa-info-circle"></i>
+                                        </span>
+                                    </label>
+                                    <input type="number" id="bankAssets" name="bank_asset_value" 
+                                           placeholder="e.g., 1000000" step="100000" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary" id="predictBtn">
+                                <i class="fas fa-magic"></i> Predict Loan Status
+                            </button>
+                            <button type="reset" class="btn btn-secondary">
+                                <i class="fas fa-redo"></i> Clear Form
+                            </button>
+                        </div>
+                    </form>
+
+                    <div class="health-indicator">
+                        <span id="healthStatus" class="status-dot"></span>
+                        <span id="healthText">Checking API...</span>
+                    </div>
+                </div>
+
+                <!-- Results Panel -->
+                <div class="results-panel">
+                    <div id="noResultsPlaceholder" class="no-results">
+                        <i class="fas fa-inbox"></i>
+                        <p>No prediction yet. Fill the form and click "Predict"</p>
+                    </div>
+
+                    <div id="resultsContainer" class="results-container" style="display: none;">
+                        <!-- Result Card -->
+                        <div class="result-card">
+                            <div class="result-header">
+                                <h2>Prediction Result</h2>
+                                <button class="btn-icon" onclick="downloadSinglePrediction()" title="Download">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                            </div>
+
+                            <div class="result-status" id="resultStatus">
+                                <div class="status-badge" id="statusBadge">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span id="predictionText">Approved</span>
+                                </div>
+                                <div class="status-details">
+                                    <div class="detail-row">
+                                        <span>Loan Status</span>
+                                        <strong id="loanStatus">Approved</strong>
+                                    </div>
+                                    <div class="detail-row">
+                                        <span>Approval Probability</span>
+                                        <strong id="approvalProb">0%</strong>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Risk Gauge -->
+                            <div class="gauge-container">
+                                <h3>Risk Score</h3>
+                                <div class="gauge-wrapper">
+                                    <svg viewBox="0 0 200 100" class="gauge">
+                                        <path d="M 20 100 A 80 80 0 0 1 180 100" class="gauge-bg"></path>
+                                        <path d="M 20 100 A 80 80 0 0 1 180 100" class="gauge-fill" id="gaugeFill" style="stroke-dasharray: 0, 251.2;"></path>
+                                        <text x="100" y="85" class="gauge-text" id="riskScoreText">0</text>
+                                        <text x="100" y="100" class="gauge-unit">/100</text>
+                                    </svg>
+                                </div>
+                                <div class="risk-label" id="riskLabel">Low Risk</div>
+                            </div>
+
+                            <!-- Charts -->
+                            <div class="charts-grid">
+                                <div class="chart-box">
+                                    <h4>Prediction Probability</h4>
+                                    <canvas id="probChart"></canvas>
+                                </div>
+                                <div class="chart-box">
+                                    <h4>Risk Distribution</h4>
+                                    <canvas id="riskChart"></canvas>
+                                </div>
+                            </div>
+
+                            <!-- Explanation Panel -->
+                            <div class="explanation-panel">
+                                <h3><i class="fas fa-lightbulb"></i> Risk Explanation</h3>
+                                <div id="explanationText" class="explanation-text">
+                                    <!-- Dynamically filled -->
+                                </div>
+                            </div>
+
+                            <!-- Input Summary Table -->
+                            <div class="summary-section">
+                                <h3>Input Summary</h3>
+                                <div class="table-wrapper">
+                                    <table id="inputTable" class="input-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Feature</th>
+                                                <th>Value</th>
+                                                <th>Category</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Recommendation Engine -->
+                            <div id="recommendationPanel" class="recommendation-panel" style="display: none;">
+                                <h3><i class="fas fa-seedling"></i> Recommendations</h3>
+                                <ul id="recommendationList" class="recommendation-list"></ul>
+                            </div>
+
+                            <!-- Notifications -->
+                            <div id="notificationContainer" class="notification-container"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ANALYTICS PAGE -->
+        <section id="analytics-page" class="page">
+            <div class="analytics-container">
+                <h2><i class="fas fa-chart-bar"></i> Analytics Dashboard</h2>
+
+                <!-- KPI Metrics -->
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-icon approved">
+                            <i class="fas fa-check"></i>
+                        </div>
+                        <div class="kpi-content">
+                            <h4>Approved</h4>
+                            <p class="kpi-value" id="kpiApproved">0</p>
+                            <span class="kpi-percentage" id="kpiApprovedPct">0%</span>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-icon rejected">
+                            <i class="fas fa-times"></i>
+                        </div>
+                        <div class="kpi-content">
+                            <h4>Rejected</h4>
+                            <p class="kpi-value" id="kpiRejected">0</p>
+                            <span class="kpi-percentage" id="kpiRejectedPct">0%</span>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-icon average">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="kpi-content">
+                            <h4>Avg Risk Score</h4>
+                            <p class="kpi-value" id="kpiAvgRisk">0</p>
+                            <span class="kpi-percentage">Rolling Average</span>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-icon total">
+                            <i class="fas fa-list"></i>
+                        </div>
+                        <div class="kpi-content">
+                            <h4>Total Predictions</h4>
+                            <p class="kpi-value" id="kpiTotal">0</p>
+                            <span class="kpi-percentage" id="kpiTotalSession">Session</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Grid -->
+                <div class="analytics-grid">
+                    <div class="chart-card">
+                        <h3>Approval Distribution</h3>
+                        <canvas id="approvalChart"></canvas>
+                    </div>
+
+                    <div class="chart-card">
+                        <h3>Risk Distribution</h3>
+                        <canvas id="riskDistributionChart"></canvas>
+                    </div>
+
+                    <div class="chart-card">
+                        <h3>Income vs Risk Score</h3>
+                        <canvas id="incomeRiskChart"></canvas>
+                    </div>
+
+                    <div class="chart-card">
+                        <h3>CIBIL vs Approval Rate</h3>
+                        <canvas id="cibilChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Prediction History -->
+                <div class="history-section">
+                    <div class="history-header">
+                        <h3><i class="fas fa-history"></i> Prediction History</h3>
+                        <div class="history-controls">
+                            <input type="search" id="historySearch" placeholder="Search...">
+                            <select id="historyFilter">
+                                <option value="">All Statuses</option>
+                                <option value="Approved">Approved</option>
+                                <option value="Rejected">Rejected</option>
+                            </select>
+                            <select id="riskFilter">
+                                <option value="">All Risk Levels</option>
+                                <option value="Low">Low Risk</option>
+                                <option value="Medium">Medium Risk</option>
+                                <option value="High">High Risk</option>
+                            </select>
+                            <button class="btn btn-secondary" onclick="downloadHistory()">
+                                <i class="fas fa-download"></i> Download
+                            </button>
+                        </div>
+                    </div>
+                    <div class="table-wrapper">
+                        <table id="historyTable" class="history-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Date & Time</th>
+                                    <th>Applicant Income</th>
+                                    <th>Loan Amount</th>
+                                    <th>CIBIL Score</th>
+                                    <th>Status</th>
+                                    <th>Probability</th>
+                                    <th>Risk Level</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================ -->
+
+        <!-- ABOUT PAGE -->
+        <!-- ============================================================ -->
+        <section id="about-page" class="page">
+            <div class="about-container">
+                <h2><i class="fas fa-robot"></i> About the Model</h2>
+
+                <div class="about-grid">
+                    <div class="about-card">
+                        <h3>Model Architecture</h3>
+                        <div class="info-content">
+                            <p><strong>Type:</strong> Random Forest Classifier</p>
+                            <p><strong>Version:</strong> 1.0.0</p>
+                            <p><strong>Framework:</strong> Scikit-Learn</p>
+                            <p><strong>Deployment Date:</strong> December 2025</p>
+                            <p><strong>Last Updated:</strong> January 2026</p>
+                        </div>
+                    </div>
+
+                    <div class="about-card">
+                        <h3>Performance Metrics</h3>
+                        <div class="metrics-grid">
+                            <div class="metric">
+                                <span class="metric-value">89.5%</span>
+                                <span class="metric-label">Accuracy</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-value">87.2%</span>
+                                <span class="metric-label">Precision</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-value">91.3%</span>
+                                <span class="metric-label">Recall</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-value">0.889</span>
+                                <span class="metric-label">F1 Score</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="about-card">
+                        <h3>Training Dataset</h3>
+                        <div class="info-content">
+                            <p><strong>Total Records:</strong> 39,456 loan applications</p>
+                            <p><strong>Approval Rate:</strong> 68.3%</p>
+                            <p><strong>Time Period:</strong> 2020-2025</p>
+                            <p><strong>Features:</strong> 11 variables</p>
+                            <p><strong>Data Quality:</strong> 99.2% completeness</p>
+                        </div>
+                    </div>
+
+                    <div class="about-card">
+                        <h3>Features Used</h3>
+                        <div class="info-content">
+                            <ul>
+                                <li>Number of Dependents</li>
+                                <li>Education Level</li>
+                                <li>Employment Status</li>
+                                <li>Annual Income</li>
+                                <li>Loan Amount</li>
+                                <li>Loan Term</li>
+                                <li>CIBIL Score</li>
+                                <li>Residential Assets</li>
+                                <li>Commercial Assets</li>
+                                <li>Luxury Assets</li>
+                                <li>Bank Assets</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Feature Importance -->
+                <div class="feature-importance-section">
+                    <h3>Top Influencing Features</h3>
+                    <canvas id="featureImportanceChart"></canvas>
+                </div>
+
+                <!-- API Documentation -->
+                <div class="documentation-section">
+                    <h3>API Documentation</h3>
+                    <div class="doc-card">
+                        <h4>Prediction Endpoint</h4>
+                        <code>POST /predict</code>
+                        <p><strong>Authentication:</strong> API Key (x-api-key header)</p>
+                        <p><strong>Request Format:</strong> JSON Array</p>
+                        <pre><code>{
+  "no_of_dependents": 2,
+  "education": "Graduate",
+  "self_employed": "No",
+  "income_annum": 500000,
+  "loan_amount": 300000,
+  "loan_term": 5,
+  "cibil_score": 750,
+  "residential_assets_value": 5000000,
+  "commercial_assets_value": 2000000,
+  "luxury_assets_value": 500000,
+  "bank_asset_value": 1000000
+}</code></pre>
+                        <p><strong>Response Format:</strong></p>
+                        <pre><code>{
+  "prediction": "Approved",
+  "approval_probability": 0.87,
+  "rejection_probability": 0.13
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+            </section>
+
+        </div> <!-- end main-content -->
+    </div> <!-- end main-wrapper -->
+
+    <!-- ============================================================ -->
+    <!-- MODALS -->
+    <!-- ============================================================ -->
+
+    <!-- Edit User Modal -->
+    <div id="editUserModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit User</h3>
+                <button class="close-btn" onclick="closeModal('editUserModal')"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <input type="hidden" id="editUsername">
+                    <div class="form-group">
+                        <label>Full Name</label>
+                        <input type="text" id="editFullname" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="editEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select id="editUserStatus">
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('editUserModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="adminDashboard.saveUserEdit()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add User Modal -->
+    <div id="addUserModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New User</h3>
+                <button class="close-btn" onclick="closeModal('addUserModal')"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="newUserForm">
+                    <div class="form-group">
+                        <label>Full Name</label>
+                        <input type="text" id="newFullname" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" id="newUsername" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="newEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="newPassword" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Role</label>
+                        <select id="newUserRole">
+                            <option value="user">User</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('addUserModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="adminDashboard.addNewUser()">Add User</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="config.js"></script>
+    <script src="utils.js"></script>
+    <script src="api.js"></script>
+    <script src="auth.js"></script>
+    <script src="predictions.js"></script>
+    <script src="analytics.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

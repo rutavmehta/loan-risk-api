@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>LoanRisk AI - Minimal Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .subtitle {
+            color: #666;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 0.9em;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #eee;
+        }
+        
+        .tab-btn {
+            padding: 10px 20px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 1em;
+            color: #999;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .tab-btn.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #eee;
+            border-radius: 5px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .message {
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            display: none;
+        }
+        
+        .message.show {
+            display: block;
+        }
+        
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .app-content {
+            display: none;
+            text-align: center;
+        }
+        
+        .app-content.show {
+            display: block;
+        }
+        
+        .welcome {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .logout-btn {
+            background: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- AUTH UI -->
+        <div id="authUI">
+            <h1>🔐 LoanRisk AI</h1>
+            <p class="subtitle">Intelligent Loan Risk Assessment</p>
+            
+            <div id="message" class="message"></div>
+            
+            <div class="tabs">
+                <button class="tab-btn active" onclick="showTab('login')">Login</button>
+                <button class="tab-btn" onclick="showTab('register')">Register</button>
+            </div>
+            
+            <!-- LOGIN FORM -->
+            <form id="loginForm" class="form-tab" data-tab="login">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="loginUsername" placeholder="Try: admin" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" placeholder="Try: admin123" required>
+                </div>
+                <button type="submit">Login</button>
+                <p style="text-align: center; margin-top: 15px; color: #666; font-size: 0.9em;">
+                    Demo: admin / admin123
+                </p>
+            </form>
+            
+            <!-- REGISTER FORM -->
+            <form id="registerForm" class="form-tab hidden" data-tab="register">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="regFullName" placeholder="John Doe" required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="regEmail" placeholder="john@example.com" required>
+                </div>
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="regUsername" placeholder="johndoe" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="regPassword" placeholder="At least 6 characters" required>
+                </div>
+                <div class="form-group">
+                    <label>Confirm Password</label>
+                    <input type="password" id="regConfirm" placeholder="Confirm password" required>
+                </div>
+                <button type="submit">Register</button>
+            </form>
+        </div>
+        
+        <!-- APP UI -->
+        <div id="appUI" class="app-content">
+            <div class="welcome">
+                ✅ Welcome, <span id="displayName"></span>!
+            </div>
+            <p style="color: #666; margin-bottom: 20px;">
+                You have successfully logged in.
+            </p>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // SIMPLE AUTH SYSTEM
+        // ============================================
+        
+        const auth = {
+            currentUser: null,
+            users: {},
+            
+            init() {
+                this.loadUsers();
+                this.checkSession();
+                console.log('✅ Auth initialized');
+                console.log('Users:', this.users);
+            },
+            
+            loadUsers() {
+                const stored = localStorage.getItem('users');
+                if (stored) {
+                    this.users = JSON.parse(stored);
+                } else {
+                    // Create default admin
+                    this.users = {
+                        'admin': {
+                            username: 'admin',
+                            password: 'admin123',
+                            fullname: 'Administrator',
+                            email: 'admin@example.com'
+                        }
+                    };
+                    this.saveUsers();
+                }
+            },
+            
+            saveUsers() {
+                localStorage.setItem('users', JSON.stringify(this.users));
+            },
+            
+            checkSession() {
+                const username = localStorage.getItem('currentUser');
+                if (username && this.users[username]) {
+                    this.currentUser = this.users[username];
+                    console.log('✅ Session restored:', username);
+                }
+            },
+            
+            login(username, password) {
+                console.log('🔑 Login attempt:', username);
+                
+                const user = this.users[username];
+                if (!user) {
+                    return { success: false, msg: '❌ User not found' };
+                }
+                
+                if (user.password !== password) {
+                    return { success: false, msg: '❌ Wrong password' };
+                }
+                
+                this.currentUser = user;
+                localStorage.setItem('currentUser', username);
+                console.log('✅ Login successful:', username);
+                return { success: true, msg: '✅ Login successful!' };
+            },
+            
+            register(fullname, email, username, password, confirm) {
+                console.log('📝 Register attempt:', username);
+                
+                if (this.users[username]) {
+                    return { success: false, msg: '❌ Username already exists' };
+                }
+                
+                if (password !== confirm) {
+                    return { success: false, msg: '❌ Passwords do not match' };
+                }
+                
+                if (password.length < 6) {
+                    return { success: false, msg: '❌ Password must be 6+ characters' };
+                }
+                
+                this.users[username] = {
+                    username: username,
+                    password: password,
+                    fullname: fullname,
+                    email: email
+                };
+                
+                this.saveUsers();
+                console.log('✅ Registration successful:', username);
+                return { success: true, msg: '✅ Registration successful! Please login.' };
+            },
+            
+            logout() {
+                this.currentUser = null;
+                localStorage.removeItem('currentUser');
+                console.log('✅ Logged out');
+            }
+        };
+        
+        // ============================================
+        // UI FUNCTIONS
+        // ============================================
+        
+        function showTab(tab) {
+            console.log('🔄 Switching to tab:', tab);
+            
+            // Hide all forms
+            document.querySelectorAll('.form-tab').forEach(form => {
+                form.classList.add('hidden');
+            });
+            
+            // Show selected form
+            document.querySelector(`[data-tab="${tab}"]`).classList.remove('hidden');
+            
+            // Update buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+        
+        function showMessage(msg, type) {
+            const msgEl = document.getElementById('message');
+            msgEl.textContent = msg;
+            msgEl.className = `message show ${type}`;
+            console.log(`📢 ${type.toUpperCase()}: ${msg}`);
+            
+            if (type === 'success') {
+                setTimeout(() => {
+                    msgEl.classList.remove('show');
+                }, 3000);
+            }
+        }
+        
+        function showApp() {
+            console.log('🎨 Showing app UI');
+            document.getElementById('authUI').style.display = 'none';
+            document.getElementById('appUI').classList.add('show');
+            document.getElementById('displayName').textContent = auth.currentUser.fullname;
+        }
+        
+        function showAuth() {
+            console.log('🎨 Showing auth UI');
+            document.getElementById('authUI').style.display = 'block';
+            document.getElementById('appUI').classList.remove('show');
+        }
+        
+        function logout() {
+            if (confirm('Logout?')) {
+                auth.logout();
+                showAuth();
+                showMessage('✅ Logged out', 'success');
+            }
+        }
+        
+        // ============================================
+        // FORM HANDLERS
+        // ============================================
+        
+        document.getElementById('loginForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            console.log('📤 Login form submitted');
+            
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            const result = auth.login(username, password);
+            showMessage(result.msg, result.success ? 'success' : 'error');
+            
+            if (result.success) {
+                setTimeout(showApp, 500);
+            }
+        });
+        
+        document.getElementById('registerForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            console.log('📤 Register form submitted');
+            
+            const fullname = document.getElementById('regFullName').value;
+            const email = document.getElementById('regEmail').value;
+            const username = document.getElementById('regUsername').value;
+            const password = document.getElementById('regPassword').value;
+            const confirm = document.getElementById('regConfirm').value;
+            
+            const result = auth.register(fullname, email, username, password, confirm);
+            showMessage(result.msg, result.success ? 'success' : 'error');
+            
+            if (result.success) {
+                setTimeout(() => {
+                    document.getElementById('registerForm').reset();
+                    showTab('login');
+                }, 500);
+            }
+        });
+        
+        // ============================================
+        // INITIALIZE
+        // ============================================
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🚀 Page loaded');
+            auth.init();
+            
+            if (auth.currentUser) {
+                showApp();
+            } else {
+                showAuth();
+            }
+        });
+    </script>
+</body>
+</html>

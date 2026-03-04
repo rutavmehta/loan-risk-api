@@ -1,6 +1,27 @@
 # backend/app/schemas.py
 
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
+from typing import List
+
+
+# -----------------------------------
+# 🔐 AUTH SCHEMAS
+# -----------------------------------
+
+class UserCreate(BaseModel):
+    email: EmailStr
+    password: str
+    full_name: str
+
+
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+
+# -----------------------------------
+# 🏦 LOAN APPLICATION SCHEMA
+# -----------------------------------
 
 class LoanApplication(BaseModel):
     no_of_dependents: int

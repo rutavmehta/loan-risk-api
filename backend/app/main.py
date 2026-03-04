@@ -1,9 +1,8 @@
-# main.py
-
 from fastapi import FastAPI, Request, Depends, HTTPException, status, Security
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from fastapi.security.api_key import APIKeyHeader
+from fastapi.middleware.cors import CORSMiddleware
 from typing import List
 import pandas as pd
 import os
@@ -20,10 +19,14 @@ if not API_KEY:
 # ----------------------------
 # Import backend modules
 # ----------------------------
-from backend.app.schemas import LoanApplication
-from backend.app.model_loader import model, scaler, feature_columns, label_encoders
-from backend.app.utils.logger import logger
-from backend.app.utils.exceptions import PredictionError, prediction_exception_handler
+from app.schemas import LoanApplication
+from app.model_loader import model, scaler, feature_columns, label_encoders
+from app.utils.logger import logger
+from app.utils.exceptions import PredictionError, prediction_exception_handler
+
+# NEW: database and auth router
+from app.database import Base, engine
+from app.auth_routes import router as auth_router
 
 # ----------------------------
 # Security dependency
@@ -39,6 +42,7 @@ def verify_api_key(api_key: str = Security(api_key_header)):
         )
     return True
 
+
 # -----------------------------------
 # Create FastAPI App
 # -----------------------------------
@@ -47,10 +51,32 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# NEW: Create all tables (users, sessions, predictions, etc.)
+Base.metadata.create_all(bind=engine)
+
+# NEW: CORS so frontend at http://localhost:3000 can call this API
+origins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "https://yourloanguard.netlify.app", 
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# NEW: include authentication routes under /auth
+app.include_router(auth_router)
+
 # -----------------------------------
 # Register Custom Exception Handlers
 # -----------------------------------
 app.add_exception_handler(PredictionError, prediction_exception_handler)
+
 
 # 422 Validation Error Handler
 @app.exception_handler(RequestValidationError)
@@ -64,6 +90,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         }
     )
 
+
 # 500 Global Exception Handler
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
@@ -75,6 +102,7 @@ async def global_exception_handler(request: Request, exc: Exception):
             "detail": str(exc)
         }
     )
+
 
 # -----------------------------------
 # Logging Middleware
@@ -90,12 +118,14 @@ async def log_requests(request: Request, call_next):
     logger.info(f"Response status: {response.status_code}")
     return response
 
+
 # -----------------------------------
 # Root Endpoint
 # -----------------------------------
 @app.get("/")
 def root():
     return {"message": "Loan Risk API with API Key Authentication is running 🚀"}
+
 
 # -----------------------------------
 # 🔒 Protected Prediction Endpoint (API Key, batch support)
@@ -105,13 +135,13 @@ def predict_loan(
     data: List[LoanApplication],
     api_key_valid: bool = Depends(verify_api_key)
 ):
-    logger.info(f"Authenticated request using API Key")
+    logger.info("Authenticated request using API Key")
 
     results = []
 
     for item in data:
         input_dict = item.dict()
-        
+
         # Convert all numeric fields to float explicitly
         numeric_fields = [
             "no_of_dependents", "income_annum", "loan_amount", "loan_term",
@@ -119,15 +149,17 @@ def predict_loan(
             "luxury_assets_value", "bank_asset_value"
         ]
         for field in numeric_fields:
-            if field in input_dict:
+            if field in input_dict and input_dict[field] is not None:
                 input_dict[field] = float(input_dict[field])
-        
+
+        # Create DataFrame
         df = pd.DataFrame([input_dict])
 
-        # Label encoding
+        # Label encoding for categorical fields
         categorical_cols = ["education", "self_employed"]
         for col in categorical_cols:
             if col in df.columns and col in label_encoders:
+                # Clean and validate value against encoder classes
                 value = str(df.at[0, col]).strip()
                 classes = [c.strip() for c in label_encoders[col].classes_]
 
@@ -136,16 +168,15 @@ def predict_loan(
                         f"Invalid value for {col}. Allowed values: {classes}"
                     )
 
-                # Encode the categorical value
+                # Encode the categorical value by index
                 encoded_value = classes.index(value)
                 df[col] = encoded_value
 
         # Maintain feature order
         df = df[feature_columns]
 
-        # Convert all to numeric
-        for col in df.columns:
-            df[col] = pd.to_numeric(df[col], errors='coerce')
+        # Ensure all features are numeric float (avoid mixed dtypes)
+        df = df.astype(float)
 
         # Scale features
         df_scaled = scaler.transform(df)

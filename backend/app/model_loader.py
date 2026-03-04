@@ -2,6 +2,11 @@
 
 import os
 import pickle
+import warnings
+
+# Suppress sklearn InconsistentVersionWarning
+warnings.filterwarnings("ignore", category=UserWarning)
+warnings.filterwarnings("ignore", message=".*InconsistentVersionWarning.*")
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_DIR = os.path.join(BASE_DIR, "models")

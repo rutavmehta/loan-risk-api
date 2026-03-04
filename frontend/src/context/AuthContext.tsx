@@ -17,9 +17,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-// Not used for auth any more, but keep it if other parts need it later
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://54.198.214.230:8000'
-
 const CURRENT_USER_KEY = 'user'
 const TOKEN_KEY = 'token'
 const SESSION_TIME_KEY = 'sessionTime'

@@ -17,6 +17,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
+// Not used for auth any more, but keep it if other parts need it later
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://54.198.214.230:8000'
 
 const CURRENT_USER_KEY = 'user'
@@ -51,13 +52,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const login = async (email: string, password: string) => {
     setIsLoading(true)
     try {
-      const res = await fetch(`${API_BASE_URL}/auth/login`, {
+      console.log('Calling Netlify login function at /.netlify/functions/login')
+      const res = await fetch('/.netlify/functions/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ email, password }),
       })
+      console.log('Login response received', res)
 
       if (!res.ok) {
         const data = await res.json().catch(() => null)
@@ -79,13 +82,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const register = async (email: string, password: string, name: string) => {
     setIsLoading(true)
     try {
-      const res = await fetch(`${API_BASE_URL}/auth/register`, {
+      console.log('Calling Netlify register function at /.netlify/functions/register')
+      const res = await fetch('/.netlify/functions/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ email, password, name }),
       })
+      console.log('Register response received', res)
 
       if (!res.ok) {
         const data = await res.json().catch(() => null)

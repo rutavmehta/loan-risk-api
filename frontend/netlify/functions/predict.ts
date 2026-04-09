@@ -11,28 +11,30 @@ export const handler: Handler = async (event) => {
   }
 
   try {
-    const res = await fetch(`${API_BASE_URL}/auth/register`, {
+    const res = await fetch(`${API_BASE_URL}/predict`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'x-api-key': 'mysecretapikey123', // SAME as backend
       },
       body: event.body ?? '',
     })
 
-    const bodyText = await res.text()
+    const data = await res.text()
 
     return {
       statusCode: res.status,
       headers: {
-        'Content-Type': res.headers.get('content-type') ?? 'application/json',
+        'Content-Type': 'application/json',
       },
-      body: bodyText,
+      body: data,
     }
-  } catch (err) {
+  } catch (error) {
+    console.error('PREDICT ERROR:', error)
+
     return {
       statusCode: 500,
-      body: JSON.stringify({ detail: 'Register proxy failed' }),
+      body: JSON.stringify({ error: 'Prediction failed' }),
     }
   }
 }
-    

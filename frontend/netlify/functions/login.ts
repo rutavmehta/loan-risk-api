@@ -1,37 +1,32 @@
 import type { Handler } from '@netlify/functions'
 
-const API_BASE_URL = process.env.VITE_API_URL;
+const API_BASE_URL = 'http://54.173.200.169:8000'
 
 export const handler: Handler = async (event) => {
-  if (event.httpMethod !== 'POST') {
-    return {
-      statusCode: 405,
-      body: 'Method Not Allowed',
-    }
-  }
-
   try {
     const res = await fetch(`${API_BASE_URL}/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: event.body ?? '',
+      body: event.body,
     })
 
-    const bodyText = await res.text()
+    const data = await res.text()
 
     return {
       statusCode: res.status,
       headers: {
-        'Content-Type': res.headers.get('content-type') ?? 'application/json',
+        'Content-Type': 'application/json',
       },
-      body: bodyText,
+      body: data,
     }
-  } catch (err) {
+  } catch (error) {
+    console.error('ERROR:', error)
+
     return {
       statusCode: 500,
-      body: JSON.stringify({ detail: 'Login proxy failed' }),
+      body: JSON.stringify({ error: 'Backend not reachable' }),
     }
   }
 }

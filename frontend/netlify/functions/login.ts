@@ -1,6 +1,6 @@
 import type { Handler } from '@netlify/functions'
 
-const API_BASE_URL = 'http://54.198.214.230:8000'
+const API_BASE_URL = 'http://localhost:8000'
 
 export const handler: Handler = async (event) => {
   if (event.httpMethod !== 'POST') {

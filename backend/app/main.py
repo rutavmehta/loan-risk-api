@@ -12,24 +12,22 @@ from dotenv import load_dotenv
 # Load API key from .env
 # ----------------------------
 load_dotenv()
-API_KEY = os.getenv("API_KEY")
-if not API_KEY:
-    raise RuntimeError("API_KEY not found in .env file!")
+API_KEY = os.getenv("API_KEY", "mysecretapikey123")  # Default key
 
 # ----------------------------
 # Import backend modules
 # ----------------------------
-from app.schemas import LoanApplication
-from app.model_loader import model, scaler, feature_columns, label_encoders
-from app.utils.logger import logger
-from app.utils.exceptions import PredictionError, prediction_exception_handler
+from .schemas import LoanApplication
+from .model_loader import model, scaler, feature_columns, label_encoders
+from .utils.logger import logger
+from .utils.exceptions import PredictionError, prediction_exception_handler
 
 # NEW: database and auth router
-from app.database import Base, engine
-from app.auth_routes import router as auth_router
+from .database import Base, engine
+from .auth_routes import router as auth_router
 
 # ----------------------------
-# Security dependency
+# Security dependency - REQUIRED for predictions
 # ----------------------------
 api_key_header = APIKeyHeader(name="x-api-key")
 
@@ -54,10 +52,12 @@ app = FastAPI(
 # NEW: Create all tables (users, sessions, predictions, etc.)
 Base.metadata.create_all(bind=engine)
 
-# NEW: CORS so frontend at http://localhost:3000 can call this API
+# NEW: CORS so frontend at http://localhost:3000/3001 can call this API
 origins = [
     "http://localhost:3000",
+    "http://localhost:3001",
     "http://127.0.0.1:3000",
+    "http://127.0.0.1:3001",
     "https://yourloanguard.netlify.app", 
 ]
 
@@ -128,14 +128,14 @@ def root():
 
 
 # -----------------------------------
-# 🔒 Protected Prediction Endpoint (API Key, batch support)
+# 🔒 Protected Prediction Endpoint (API Key Required)
 # -----------------------------------
 @app.post("/predict")
 def predict_loan(
     data: List[LoanApplication],
     api_key_valid: bool = Depends(verify_api_key)
 ):
-    logger.info("Authenticated request using API Key")
+    logger.info("Authenticated prediction request received")
 
     results = []
 

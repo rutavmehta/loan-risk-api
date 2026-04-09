@@ -49,8 +49,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const login = async (email: string, password: string) => {
     setIsLoading(true)
     try {
-      console.log('Calling Netlify login function at /.netlify/functions/login')
-      const res = await fetch('/.netlify/functions/login', {
+      // Use direct backend API for local dev, or Netlify functions for production
+      const apiUrl = import.meta.env.DEV 
+        ? 'http://localhost:8000/auth/login'
+        : '/.netlify/functions/login'
+      
+      console.log(`Calling login at ${apiUrl}`)
+      const res = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -79,8 +84,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const register = async (email: string, password: string, name: string) => {
     setIsLoading(true)
     try {
-      console.log('Calling Netlify register function at /.netlify/functions/register')
-      const res = await fetch('/.netlify/functions/register', {
+      // Use direct backend API for local dev, or Netlify functions for production
+      const apiUrl = import.meta.env.DEV 
+        ? 'http://localhost:8000/auth/register'
+        : '/.netlify/functions/register'
+      
+      console.log(`Calling register at ${apiUrl}`)
+      const res = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

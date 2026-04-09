@@ -73,25 +73,27 @@ export const PredictionPage: React.FC = () => {
     setLoading(true)
 
     try {
-      // Mock prediction - Replace with actual API call
-      await new Promise(resolve => setTimeout(resolve, 1500))
+      // Call the actual backend API with API key
+      const response = await fetch('http://localhost:8000/predict', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': 'mysecretapikey123',
+        },
+        body: JSON.stringify([formData]), // Backend expects array of applications
+      })
 
-      const totalAssets =
-        formData.residential_assets_value +
-        formData.commercial_assets_value +
-        formData.luxury_assets_value +
-        formData.bank_asset_value
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.detail || 'Prediction failed')
+      }
 
-      const riskScore = Math.min(
-        100,
-        Math.max(
-          20,
-          50 +
-            (formData.loan_amount / Math.max(formData.income_annum, 1)) * 10 -
-            (formData.cibil_score / 900) * 20 -
-            (totalAssets / Math.max(formData.loan_amount || 1, 1)) * 5
-        )
-      )
+      const predictions = await response.json()
+      const backendResult = predictions[0] // Get first result
+
+      // Convert backend response to frontend format
+      const approvalProb = backendResult.approval_probability || 0
+      const riskScore = Math.round((1 - approvalProb) * 100) // Convert to risk percentage
 
       let status: 'Approved' | 'Risky' | 'Review'
       let recommendation: string
@@ -111,7 +113,7 @@ export const PredictionPage: React.FC = () => {
       }
 
       const prediction: PredictionResult = {
-        risk_score: Math.round(riskScore),
+        risk_score: riskScore,
         status,
         recommendation,
       }

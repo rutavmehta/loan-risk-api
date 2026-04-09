@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 # Load API key from .env
 # ----------------------------
 load_dotenv()
-API_KEY = os.getenv("API_KEY", "mysecretapikey123")  # Default key
+API_KEY = os.getenv("API_KEY", "mysecretapikey123")
 
 # ----------------------------
 # Import backend modules
@@ -22,12 +22,11 @@ from .model_loader import model, scaler, feature_columns, label_encoders
 from .utils.logger import logger
 from .utils.exceptions import PredictionError, prediction_exception_handler
 
-# NEW: database and auth router
 from .database import Base, engine
 from .auth_routes import router as auth_router
 
 # ----------------------------
-# Security dependency - REQUIRED for predictions
+# Security dependency
 # ----------------------------
 api_key_header = APIKeyHeader(name="x-api-key")
 
@@ -49,36 +48,31 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# NEW: Create all tables (users, sessions, predictions, etc.)
 Base.metadata.create_all(bind=engine)
 
-# NEW: CORS so frontend at http://localhost:3000/3001 can call this API
-origins = [
-    "http://localhost:3000",
-    "http://localhost:3001",
-    "http://127.0.0.1:3000",
-    "http://127.0.0.1:3001",
-    "https://yourloanguard.netlify.app", 
-]
-
+# -----------------------------------
+# ✅ FIXED CORS (IMPORTANT)
+# -----------------------------------
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],   # 🔥 Allow all (for demo)
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# NEW: include authentication routes under /auth
+# -----------------------------------
+# Routers
+# -----------------------------------
 app.include_router(auth_router)
 
+
 # -----------------------------------
-# Register Custom Exception Handlers
+# Exception Handlers
 # -----------------------------------
 app.add_exception_handler(PredictionError, prediction_exception_handler)
 
 
-# 422 Validation Error Handler
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     logger.error(f"Validation Error at {request.url}: {exc.errors()}")
@@ -91,7 +85,6 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     )
 
 
-# 500 Global Exception Handler
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     logger.error(f"Unhandled Exception at {request.url}: {str(exc)}")
@@ -110,11 +103,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
     logger.info(f"Incoming request: {request.method} {request.url}")
-    try:
-        response = await call_next(request)
-    except Exception as e:
-        logger.error(f"Unhandled exception: {str(e)}")
-        raise e
+    response = await call_next(request)
     logger.info(f"Response status: {response.status_code}")
     return response
 
@@ -124,11 +113,11 @@ async def log_requests(request: Request, call_next):
 # -----------------------------------
 @app.get("/")
 def root():
-    return {"message": "Loan Risk API with API Key Authentication is running 🚀"}
+    return {"message": "Loan Risk API is running 🚀"}
 
 
 # -----------------------------------
-# 🔒 Protected Prediction Endpoint (API Key Required)
+# 🔒 Protected Prediction Endpoint
 # -----------------------------------
 @app.post("/predict")
 def predict_loan(
@@ -142,24 +131,21 @@ def predict_loan(
     for item in data:
         input_dict = item.dict()
 
-        # Convert all numeric fields to float explicitly
         numeric_fields = [
             "no_of_dependents", "income_annum", "loan_amount", "loan_term",
             "cibil_score", "residential_assets_value", "commercial_assets_value",
             "luxury_assets_value", "bank_asset_value"
         ]
+
         for field in numeric_fields:
             if field in input_dict and input_dict[field] is not None:
                 input_dict[field] = float(input_dict[field])
 
-        # Create DataFrame
         df = pd.DataFrame([input_dict])
 
-        # Label encoding for categorical fields
         categorical_cols = ["education", "self_employed"]
         for col in categorical_cols:
             if col in df.columns and col in label_encoders:
-                # Clean and validate value against encoder classes
                 value = str(df.at[0, col]).strip()
                 classes = [c.strip() for c in label_encoders[col].classes_]
 
@@ -168,30 +154,17 @@ def predict_loan(
                         f"Invalid value for {col}. Allowed values: {classes}"
                     )
 
-                # Encode the categorical value by index
-                encoded_value = classes.index(value)
-                df[col] = encoded_value
+                df[col] = classes.index(value)
 
-        # Maintain feature order
         df = df[feature_columns]
-
-        # Ensure all features are numeric float (avoid mixed dtypes)
         df = df.astype(float)
 
-        # Scale features
         df_scaled = scaler.transform(df)
 
-        # Predict
         prediction = model.predict(df_scaled)[0]
         probabilities = model.predict_proba(df_scaled)[0]
 
         result = "Approved" if prediction == 1 else "Rejected"
-
-        logger.info(
-            f"Prediction: {result}, "
-            f"Approval Probability: {probabilities[1]}, "
-            f"Rejection Probability: {probabilities[0]}"
-        )
 
         results.append({
             "prediction": result,

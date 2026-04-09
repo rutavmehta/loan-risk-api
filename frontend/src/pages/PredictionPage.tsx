@@ -74,7 +74,7 @@ export const PredictionPage: React.FC = () => {
 
     try {
       // Call the actual backend API with API key
-      const response = await fetch('http://localhost:8000/predict', {
+      const response = await fetch('http://54.173.200.169:8000/predict', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

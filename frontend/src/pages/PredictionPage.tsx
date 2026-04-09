@@ -74,11 +74,10 @@ export const PredictionPage: React.FC = () => {
 
     try {
       // Call the actual backend API with API key
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/predict`, {
+      const response = await fetch('/.netlify/functions/predict', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': 'mysecretapikey123',
         },
         body: JSON.stringify([formData]), // Backend expects array of applications
       })

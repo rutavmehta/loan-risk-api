@@ -1,6 +1,6 @@
 import type { Handler } from '@netlify/functions'
 
-const API_BASE_URL = 'http://54.173.200.169:8000'
+const API_BASE_URL = process.env.VITE_API_URL;
 
 export const handler: Handler = async (event) => {
   if (event.httpMethod !== 'POST') {

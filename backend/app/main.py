@@ -26,6 +26,11 @@ from .database import Base, engine
 from .auth_routes import router as auth_router
 
 # ----------------------------
+# 🔥 PROMETHEUS IMPORT (ADDED)
+# ----------------------------
+from prometheus_fastapi_instrumentator import Instrumentator
+
+# ----------------------------
 # Security dependency
 # ----------------------------
 api_key_header = APIKeyHeader(name="x-api-key")
@@ -48,15 +53,20 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# ----------------------------
+# 🔥 PROMETHEUS INIT (ADDED)
+# ----------------------------
+Instrumentator().instrument(app).expose(app)
+
 Base.metadata.create_all(bind=engine)
 
 # -----------------------------------
-# ✅ FIXED CORS (IMPORTANT)
+# CORS
 # -----------------------------------
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-    "https://yourloanguard.netlify.app"
+        "https://yourloanguard.netlify.app"
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -67,7 +77,6 @@ app.add_middleware(
 # Routers
 # -----------------------------------
 app.include_router(auth_router)
-
 
 # -----------------------------------
 # Exception Handlers
@@ -98,7 +107,6 @@ async def global_exception_handler(request: Request, exc: Exception):
         }
     )
 
-
 # -----------------------------------
 # Logging Middleware
 # -----------------------------------
@@ -116,7 +124,6 @@ async def log_requests(request: Request, call_next):
 @app.get("/")
 def root():
     return {"message": "Loan Risk API is running 🚀"}
-
 
 # -----------------------------------
 # 🔒 Protected Prediction Endpoint

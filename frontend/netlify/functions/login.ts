@@ -1,6 +1,6 @@
 import type { Handler } from '@netlify/functions'
 
-const API_BASE_URL = 'http://54.173.200.169:8000'
+const API_BASE_URL = 'http://34.234.23.223:8000'
 
 export const handler: Handler = async (event) => {
   try {

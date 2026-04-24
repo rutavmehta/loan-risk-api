@@ -1,0 +1,178 @@
+---
+# Ingress for external access with TLS
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: loan-risk-ingress
+  namespace: loan-risk-ml
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/auth-type: "basic"
+    nginx.ingress.kubernetes.io/auth-secret: "loan-risk-secrets"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - api.yourloanguard.com
+      secretName: loan-risk-tls
+  rules:
+    - host: api.yourloanguard.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: loan-risk-api-service
+                port:
+                  number: 80
+          - path: /predict
+            pathType: Prefix
+            backend:
+              service:
+                name: loan-risk-api-service
+                port:
+                  number: 80
+          - path: /auth
+            pathType: Prefix
+            backend:
+              service:
+                name: loan-risk-api-service
+                port:
+                  number: 80
+          - path: /metrics
+            pathType: Prefix
+            backend:
+              service:
+                name: loan-risk-api-service
+                port:
+                  number: 8000
+
+---
+# HorizontalPodAutoscaler for automatic scaling
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: loan-risk-hpa
+  namespace: loan-risk-ml
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: loan-risk-api
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+    # Scale based on CPU usage
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    # Scale based on memory usage
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+    # Scale based on custom metrics (prediction latency)
+    - type: Pods
+      pods:
+        metric:
+          name: ml_prediction_latency_seconds
+        target:
+          type: AverageValue
+          averageValue: 1500m  # 1.5 seconds
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Percent
+          value: 50
+          periodSeconds: 15
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 30
+        - type: Pods
+          value: 2
+          periodSeconds: 30
+      selectPolicy: Max
+
+---
+# PodDisruptionBudget to ensure availability during cluster operations
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: loan-risk-pdb
+  namespace: loan-risk-ml
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: loan-risk-api
+  unhealthyPodEvictionPolicy: AlwaysAllow
+
+---
+# NetworkPolicy for pod-to-pod communication
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: loan-risk-network-policy
+  namespace: loan-risk-ml
+spec:
+  podSelector:
+    matchLabels:
+      app: loan-risk-api
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Allow from ingress controller
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 8000
+    # Allow from Prometheus
+    - from:
+        - podSelector:
+            matchLabels:
+              app: prometheus
+      ports:
+        - protocol: TCP
+          port: 8000
+    # Allow from same namespace
+    - from:
+        - podSelector: {}
+      ports:
+        - protocol: TCP
+          port: 8000
+  egress:
+    # Allow DNS
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: UDP
+          port: 53
+    # Allow to internet
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 443
+    # Allow to same namespace
+    - to:
+        - podSelector: {}

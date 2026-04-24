@@ -26,7 +26,7 @@ from .database import Base, engine
 from .auth_routes import router as auth_router
 
 # ----------------------------
-# 🔥 PROMETHEUS IMPORT (ADDED)
+# PROMETHEUS IMPORT
 # ----------------------------
 from prometheus_fastapi_instrumentator import Instrumentator
 
@@ -54,7 +54,7 @@ app = FastAPI(
 )
 
 # ----------------------------
-# 🔥 PROMETHEUS INIT (ADDED)
+# PROMETHEUS INIT
 # ----------------------------
 Instrumentator().instrument(app).expose(app)
 
@@ -126,7 +126,7 @@ def root():
     return {"message": "Loan Risk API is running 🚀"}
 
 # -----------------------------------
-# 🔒 Protected Prediction Endpoint
+# Protected Prediction Endpoint
 # -----------------------------------
 @app.post("/predict")
 def predict_loan(

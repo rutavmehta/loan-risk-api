@@ -1,6 +1,6 @@
 from fastapi import Request
 from fastapi.responses import JSONResponse
-from app.utils.logger import logger
+from .logger import logger
 
 class PredictionError(Exception):
     def __init__(self, detail: str):

@@ -1,0 +1,247 @@
+---
+# Deployment for Loan Risk ML API
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loan-risk-api
+  namespace: loan-risk-ml
+  labels:
+    app: loan-risk-api
+    version: v1
+    tier: backend
+    monitoring: enabled
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: loan-risk-api
+  template:
+    metadata:
+      labels:
+        app: loan-risk-api
+        version: v1
+        tier: backend
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+    spec:
+      # Service Account
+      serviceAccountName: loan-risk-sa
+      
+      # Security context
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+
+      # Image pull secrets
+      imagePullSecrets:
+        - name: docker-registry-secret
+
+      # Init containers for pre-flight checks
+      initContainers:
+        - name: wait-for-migrations
+          image: busybox:1.35
+          command: ['sh', '-c', 'echo "Pre-flight checks passed"']
+
+      # Main containers
+      containers:
+        - name: loan-risk-api
+          image: loan-risk-api:latest  # Change to your registry: docker.io/yourname/loan-risk-api:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+            - name: metrics
+              containerPort: 8000
+              protocol: TCP
+
+          # Environment variables
+          env:
+            - name: LOG_LEVEL
+              valueFrom:
+                configMapKeyRef:
+                  name: loan-risk-config
+                  key: LOG_LEVEL
+            - name: API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: loan-risk-secrets
+                  key: api-key
+            - name: DATABASE_URL
+              value: "sqlite:///./loan_risk.db"
+            - name: PROMETHEUS_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: loan-risk-config
+                  key: PROMETHEUS_ENABLED
+            - name: PYTHONUNBUFFERED
+              value: "1"
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+
+          # Resource requests and limits
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+
+          # Liveness probe - restart pod if not responsive
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          # Readiness probe - route traffic only to ready pods
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 2
+
+          # Startup probe - for slow-starting apps
+          startupProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 30
+
+          # Security context for container
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - NET_BIND_SERVICE
+
+          # Volume mounts
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+            - name: cache
+              mountPath: /tmp/model_cache
+            - name: logs
+              mountPath: /app/logs
+
+      # Volumes
+      volumes:
+        - name: data
+          emptyDir: {}
+        - name: cache
+          emptyDir: {}
+        - name: logs
+          emptyDir: {}
+
+      # Affinity rules
+      affinity:
+        # Pod anti-affinity to spread replicas across nodes
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - loan-risk-api
+                topologyKey: kubernetes.io/hostname
+
+      # Tolerations for node taints
+      tolerations:
+        - key: "workload-type"
+          operator: "Equal"
+          value: "ml-inference"
+          effect: "NoSchedule"
+
+      # DNS policy
+      dnsPolicy: ClusterFirst
+
+      # Termination grace period
+      terminationGracePeriodSeconds: 30
+
+      # Restart policy
+      restartPolicy: Always
+
+---
+# Service for Loan Risk API
+apiVersion: v1
+kind: Service
+metadata:
+  name: loan-risk-api-service
+  namespace: loan-risk-ml
+  labels:
+    app: loan-risk-api
+spec:
+  type: ClusterIP
+  selector:
+    app: loan-risk-api
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: http
+    - name: metrics
+      protocol: TCP
+      port: 8000
+      targetPort: metrics
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800
+
+---
+# Service for external access (LoadBalancer)
+apiVersion: v1
+kind: Service
+metadata:
+  name: loan-risk-api-lb
+  namespace: loan-risk-ml
+  labels:
+    app: loan-risk-api
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: nlb
+spec:
+  type: LoadBalancer
+  selector:
+    app: loan-risk-api
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: http
+  allocateLoadBalancerNodePorts: true

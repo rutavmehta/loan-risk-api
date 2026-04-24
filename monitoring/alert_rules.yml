@@ -1,0 +1,156 @@
+groups:
+  - name: ml_model_alerts
+    interval: 30s
+    rules:
+      # HIGH LATENCY ALERT
+      - alert: HighPredictionLatency
+        expr: histogram_quantile(0.95, ml_prediction_latency_seconds) > 2.0
+        for: 5m
+        labels:
+          severity: warning
+          service: loan-risk-api
+        annotations:
+          summary: "High prediction latency detected"
+          description: "95th percentile prediction latency is {{ $value }} seconds"
+          runbook_url: "https://wiki.example.com/runbooks/high-latency"
+
+      # LOW MODEL ACCURACY ALERT
+      - alert: LowModelAccuracy
+        expr: ml_model_accuracy < 0.85
+        for: 5m
+        labels:
+          severity: critical
+          service: ml-models
+        annotations:
+          summary: "Model accuracy has dropped below 85%"
+          description: "Current model accuracy: {{ $value | humanizePercentage }}"
+          runbook_url: "https://wiki.example.com/runbooks/low-accuracy"
+
+      # HIGH ERROR RATE ALERT
+      - alert: HighAPIErrorRate
+        expr: |
+          (increase(ml_api_errors_total[5m]) / increase(ml_predictions_total[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          service: loan-risk-api
+        annotations:
+          summary: "API error rate is above 5%"
+          description: "Error rate: {{ $value | humanizePercentage }}"
+
+      # LOW APPROVAL RATE ALERT (Business metric)
+      - alert: UnusuallyLowApprovalRate
+        expr: ml_approval_rate < 20
+        for: 10m
+        labels:
+          severity: warning
+          service: ml-models
+        annotations:
+          summary: "Approval rate has dropped below 20%"
+          description: "Current approval rate: {{ $value | humanizePercentage }}"
+
+      # HIGH PREDICTION LOAD ALERT
+      - alert: HighPredictionLoad
+        expr: rate(ml_predictions_total[5m]) > 100
+        for: 5m
+        labels:
+          severity: warning
+          service: loan-risk-api
+        annotations:
+          summary: "High prediction request rate detected"
+          description: "Prediction rate: {{ $value }} predictions/sec"
+
+      # MODEL NOT RESPONDING
+      - alert: ModelUnresponsive
+        expr: up{job="loan-risk-api"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: loan-risk-api
+        annotations:
+          summary: "ML API is down"
+          description: "The loan-risk-api has been unresponsive for 2 minutes"
+
+      # AVERAGE LOAN AMOUNT ANOMALY
+      - alert: AnomalousLoanAmount
+        expr: |
+          abs(ml_average_loan_amount - avg(ml_average_loan_amount offset 24h)) > ml_average_loan_amount * 0.5
+        for: 10m
+        labels:
+          severity: warning
+          service: ml-models
+        annotations:
+          summary: "Average loan amount shows anomalous behavior"
+          description: "Current average: {{ $value | humanize }} (differs >50% from 24h avg)"
+
+      # HIGH INVALID INPUT RATE
+      - alert: HighInvalidInputRate
+        expr: rate(ml_invalid_inputs_total[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+          service: loan-risk-api
+        annotations:
+          summary: "High rate of invalid inputs detected"
+          description: "Invalid input rate: {{ $value }} per second"
+
+      # DATA QUALITY DEGRADATION
+      - alert: DataQualityDegraded
+        expr: ml_data_quality_score < 70
+        for: 5m
+        labels:
+          severity: warning
+          service: ml-models
+        annotations:
+          summary: "Data quality score has degraded"
+          description: "Current data quality score: {{ $value }}"
+
+      # MODEL CONFIDENCE BELOW THRESHOLD
+      - alert: LowModelConfidence
+        expr: |
+          histogram_quantile(0.50, ml_prediction_confidence) < 0.7
+        for: 10m
+        labels:
+          severity: warning
+          service: ml-models
+        annotations:
+          summary: "Model confidence is below 70%"
+          description: "Median prediction confidence: {{ $value }}"
+
+      # SLOW MODEL INITIALIZATION
+      - alert: SlowModelLoad
+        expr: ml_model_load_time_seconds > 5
+        for: 1m
+        labels:
+          severity: warning
+          service: ml-models
+        annotations:
+          summary: "Model load time exceeds 5 seconds"
+          description: "Model load time: {{ $value }} seconds"
+
+  - name: infrastructure_alerts
+    interval: 30s
+    rules:
+      # MEMORY ALERT (if using node-exporter)
+      - alert: HighMemoryUsage
+        expr: |
+          (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          service: infrastructure
+        annotations:
+          summary: "High memory usage detected"
+          description: "Memory usage: {{ $value | humanizePercentage }}"
+
+      # CPU ALERT
+      - alert: HighCPUUsage
+        expr: |
+          (1 - avg by (cpu) (rate(node_cpu_seconds_total{mode="idle"}[5m]))) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          service: infrastructure
+        annotations:
+          summary: "High CPU usage detected"
+          description: "CPU usage: {{ $value | humanizePercentage }}"

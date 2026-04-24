@@ -1,0 +1,73 @@
+---
+# Namespace for the application
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: loan-risk-ml
+  labels:
+    name: loan-risk-ml
+    environment: production
+    monitoring: enabled
+
+---
+# ConfigMap for application configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loan-risk-config
+  namespace: loan-risk-ml
+data:
+  LOG_LEVEL: "INFO"
+  DATABASE_TYPE: "sqlite"  # Can be changed to postgresql in production
+  MODEL_CACHE_SIZE: "10"
+  MAX_WORKERS: "4"
+  PREDICTION_TIMEOUT: "30"
+  ENABLE_PROFILING: "false"
+  METRICS_PORT: "8000"
+  PROMETHEUS_ENABLED: "true"
+
+---
+# ConfigMap for Prometheus scrape config
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: loan-risk-ml
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+    scrape_configs:
+      - job_name: 'loan-risk-api'
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names:
+                - loan-risk-ml
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_label_app]
+            action: keep
+            regex: loan-risk-api
+          - source_labels: [__meta_kubernetes_pod_container_port_number]
+            action: keep
+            regex: "8000"
+
+---
+# ConfigMap for Grafana dashboards
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboards
+  namespace: loan-risk-ml
+data:
+  datasources.yml: |
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        access: proxy
+        url: http://prometheus:9090
+        isDefault: true
+        jsonData:
+          timeInterval: 15s

@@ -6,7 +6,6 @@ from passlib.context import CryptContext
 
 from .models import User
 
-# Change this to a strong secret, or load from env
 SECRET_KEY = "CHANGE_THIS_TO_A_LONG_RANDOM_SECRET"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 1 day
